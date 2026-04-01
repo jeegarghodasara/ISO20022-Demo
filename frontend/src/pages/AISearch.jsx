@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, Radar, FileSearch, AlertCircle, Sparkles, Code, ChevronDown, ChevronRight } from 'lucide-react'
 import {
-  getAISearchStatus,
   naturalLanguageSearch,
   findSimilarTransactions,
   remittanceMatch,
 } from '../services/api'
+import { useAISearchContext } from '../context/AISearchContext'
 import StatusBadge from '../components/StatusBadge'
 import MessageTypeBadge from '../components/MessageTypeBadge'
 
@@ -219,17 +219,16 @@ function VectorQueryPreview({ activeTab, queryText, uetr, resultCount }) {
 }
 
 export default function AISearch() {
-  const [activeTab, setActiveTab] = useState('natural')
-  const [status, setStatus] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [query, setQuery] = useState('')
-  const [uetrInput, setUetrInput] = useState('')
-  const [results, setResults] = useState(null)
-  const [error, setError] = useState(null)
+  const {
+    activeTab, setActiveTab,
+    status,
+    query, setQuery,
+    uetrInput, setUetrInput,
+    results, setResults,
+    error, setError,
+  } = useAISearchContext()
 
-  useEffect(() => {
-    getAISearchStatus().then(setStatus).catch(console.error)
-  }, [])
+  const [loading, setLoading] = useState(false)
 
   const handleSearch = async (e) => {
     e?.preventDefault()
@@ -302,7 +301,7 @@ export default function AISearch() {
           return (
             <button
               key={tab.id}
-              onClick={() => { setActiveTab(tab.id); setResults(null); setError(null) }}
+              onClick={() => { setActiveTab(tab.id) }}
               style={{
                 padding: '10px 18px', borderRadius: 'var(--radius)', fontSize: 13, fontWeight: 600,
                 cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,

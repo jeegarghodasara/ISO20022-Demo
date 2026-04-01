@@ -16,6 +16,7 @@ from app.routes import (
     ai_search,
     collections,
     websocket,
+    agents,
 )
 
 
@@ -62,6 +63,7 @@ app.include_router(ai_search.router, prefix="/api/ai-search", tags=["AI Vector S
 app.include_router(
     collections.router, prefix="/api/collections", tags=["Collection Explorer"]
 )
+app.include_router(agents.router, prefix="/api/agents", tags=["AI Agents"])
 app.include_router(websocket.router, tags=["WebSocket Change Stream"])
 
 

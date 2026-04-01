@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, ArrowRightLeft, FileText, Search,
-  PlusCircle, AlertTriangle, Database, Sparkles, Brain, Library, Radio
+  PlusCircle, AlertTriangle, Database, Sparkles, Brain, Library, Radio, Bot
 } from 'lucide-react'
 
 const navItems = [
@@ -17,6 +17,7 @@ const navItems = [
   { to: '/investigations', icon: AlertTriangle, label: 'Investigations' },
   { section: 'AI & Search' },
   { to: '/ai-search', icon: Brain, label: 'AI Search' },
+  { to: '/agents', icon: Bot, label: 'AI Agents' },
   { section: 'MongoDB' },
   { to: '/value-props', icon: Sparkles, label: 'Value Propositions' },
   { to: '/collections', icon: Library, label: 'Collection Explorer' },

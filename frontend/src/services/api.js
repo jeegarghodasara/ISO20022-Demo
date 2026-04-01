@@ -71,6 +71,16 @@ export const getProcessingTimes = () => fetchJson('/analytics/processing-times')
 export const getValuePropsSummary = () => fetchJson('/value-props/summary');
 export const getValueProp = (name) => fetchJson(`/value-props/${name}`);
 
+// AI Agents
+export const getAgents = () => fetchJson('/agents');
+export const askAgent = (data) =>
+  fetchJson('/agents/ask', { method: 'POST', body: JSON.stringify(data) });
+export const getAgentMemories = (agentId, memoryType) =>
+  fetchJson(`/agents/memory/${agentId}${memoryType ? `?memory_type=${memoryType}` : ''}`);
+export const getMemoryStats = () => fetchJson('/agents/memory-stats');
+export const getAgentMessages = (limit = 50) => fetchJson(`/agents/messages?limit=${limit}`);
+export const getAgentConversations = (limit = 20) => fetchJson(`/agents/conversations?limit=${limit}`);
+
 // Collection Explorer
 export const getCollections = () => fetchJson('/collections');
 export const getCollectionDetail = (name) => fetchJson(`/collections/${name}`);

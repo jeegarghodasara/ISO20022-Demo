@@ -142,6 +142,43 @@ async def create_indexes():
     # original_messages collection
     await db.original_messages.create_index([("messageId", ASCENDING)])
 
+    # ===== Agent Architecture Collections =====
+
+    # agent_memory — polymorphic: episodic, semantic, procedural
+    await db.agent_memory.create_index(
+        [("agentId", ASCENDING), ("memoryType", ASCENDING), ("createdAt", DESCENDING)]
+    )
+    await db.agent_memory.create_index(
+        [("agentId", ASCENDING), ("lastAccessedAt", DESCENDING)]
+    )
+    await db.agent_memory.create_index([("conversationId", ASCENDING)])
+    await db.agent_memory.create_index(
+        [("expiresAt", ASCENDING)],
+        expireAfterSeconds=0,  # TTL: auto-expire short-term memory
+    )
+
+    # agent_messages — inter-agent communication bus
+    await db.agent_messages.create_index(
+        [("conversationId", ASCENDING), ("createdAt", ASCENDING)]
+    )
+    await db.agent_messages.create_index(
+        [("toAgent", ASCENDING), ("status", ASCENDING)]
+    )
+    await db.agent_messages.create_index(
+        [("createdAt", ASCENDING)],
+        expireAfterSeconds=86400,  # TTL: 24 hours
+    )
+
+    # agent_conversations — conversation history
+    await db.agent_conversations.create_index(
+        [("conversationId", ASCENDING)], unique=True
+    )
+    await db.agent_conversations.create_index([("createdAt", DESCENDING)])
+    await db.agent_conversations.create_index(
+        [("createdAt", ASCENDING)],
+        expireAfterSeconds=604800,  # TTL: 7 days
+    )
+
     print("All indexes created successfully")
 
 
