@@ -90,6 +90,32 @@ async def get_dashboard():
         "investigationStats": [
             {"status": i["_id"], "count": i["count"]} for i in inv_stats
         ],
+        "pipelines": {
+            "summary": {
+                "label": "Summary Stats",
+                "description": "$group across all payments to compute count, total, and average",
+                "pipeline": total_pipeline,
+            },
+            "statusDistribution": {
+                "label": "Status Distribution",
+                "description": "$group by status field, then $sort by count",
+                "pipeline": status_pipeline,
+            },
+            "currencyDistribution": {
+                "label": "Volume by Currency",
+                "description": "$group by settlementCurrency with $sum and $toDouble for Decimal128 amounts",
+                "pipeline": currency_pipeline,
+            },
+            "dailyActivity": {
+                "label": "Daily Activity (Last 30 Days)",
+                "description": "$match recent + $group by $dateToString for time-series aggregation",
+                "pipeline": [
+                    {"$match": {"createdAt": {"$gte": "ISODate('now - 30 days')"}}},
+                    daily_pipeline[1],
+                    daily_pipeline[2],
+                ],
+            },
+        },
     }
 
 

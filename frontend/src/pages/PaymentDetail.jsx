@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, RefreshCw } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Radio, RotateCcw } from 'lucide-react'
 import { getPayment, updatePaymentStatus } from '../services/api'
 import StatusBadge from '../components/StatusBadge'
 import MessageTypeBadge, { MESSAGE_TYPE_LABELS } from '../components/MessageTypeBadge'
+import usePaymentStream from '../hooks/usePaymentStream'
 
 function formatDate(d) {
   if (!d) return '-'
@@ -22,6 +23,14 @@ export default function PaymentDetail() {
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
 
+  // Change Stream: watch for updates to THIS specific payment
+  const { connected, lastEvent } = usePaymentStream({
+    filter: (event) => {
+      const eventUetr = event.payment?.uetr || event.originalUetr
+      return eventUetr === uetr
+    },
+  })
+
   const load = () => {
     setLoading(true)
     getPayment(uetr)
@@ -31,6 +40,13 @@ export default function PaymentDetail() {
   }
 
   useEffect(() => { load() }, [uetr])
+
+  // Auto-reload when a Change Stream event arrives for this payment
+  useEffect(() => {
+    if (lastEvent && !loading) {
+      load()
+    }
+  }, [lastEvent])
 
   const handleStatusUpdate = async (newStatus) => {
     setUpdating(true)
@@ -63,6 +79,19 @@ export default function PaymentDetail() {
         </h2>
         <p>{typeLabel} | Message ID: {p.messageId}</p>
       </div>
+
+      {/* Return detection banner — shown when a pacs.004 return has been linked */}
+      {p.returnedBy && (
+        <div className="card" style={{ marginBottom: 16, borderColor: 'var(--orange)', background: 'var(--orange-bg)' }}>
+          <p style={{ fontSize: 13, color: 'var(--orange)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <RotateCcw size={16} />
+            <strong>Return Detected:</strong> This payment has been returned.
+            <Link to={`/payments/${p.returnedBy}`} style={{ fontFamily: 'var(--font-code)', fontSize: 12, color: 'var(--orange)' }}>
+              View return {p.returnedBy?.slice(0, 12)}...
+            </Link>
+          </p>
+        </div>
+      )}
 
       {/* MongoDB Value Prop callout */}
       <div className="card" style={{ marginBottom: 20, borderColor: 'var(--accent)', background: 'var(--accent-bg)' }}>
@@ -188,7 +217,14 @@ export default function PaymentDetail() {
           <div className="card" style={{ marginBottom: 16 }}>
             <div className="detail-section">
               <h4 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                Status History
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  Status History
+                  {connected && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--accent)', fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}>
+                      <Radio size={10} style={{ animation: 'pulse 2s infinite' }} /> Live
+                    </span>
+                  )}
+                </span>
                 <button className="btn btn-sm" onClick={load} disabled={updating}><RefreshCw size={12} /> Refresh</button>
               </h4>
               <div style={{ marginBottom: 12, display: 'flex', gap: 6, flexWrap: 'wrap' }}>

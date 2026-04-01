@@ -10,12 +10,14 @@ import Investigations from './pages/Investigations'
 import ValueProps from './pages/ValueProps'
 import AISearch from './pages/AISearch'
 import Collections from './pages/Collections'
+import LiveFeed from './pages/LiveFeed'
 
 function App() {
   return (
     <Layout>
       <Routes>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/live" element={<LiveFeed />} />
         <Route path="/payments" element={<Payments />} />
         <Route path="/payments/new" element={<NewPayment />} />
         <Route path="/payments/:uetr" element={<PaymentDetail />} />

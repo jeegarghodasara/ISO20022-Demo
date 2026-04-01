@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -13,13 +15,17 @@ from app.routes import (
     value_props,
     ai_search,
     collections,
+    websocket,
 )
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await connect_to_mongo()
+    # Start the Change Stream watcher as a background task
+    watcher_task = asyncio.create_task(websocket.watch_payments())
     yield
+    watcher_task.cancel()
     await close_mongo_connection()
 
 
@@ -56,6 +62,7 @@ app.include_router(ai_search.router, prefix="/api/ai-search", tags=["AI Vector S
 app.include_router(
     collections.router, prefix="/api/collections", tags=["Collection Explorer"]
 )
+app.include_router(websocket.router, tags=["WebSocket Change Stream"])
 
 
 @app.get("/api/health")

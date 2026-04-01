@@ -1,12 +1,13 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, ArrowRightLeft, FileText, Search,
-  PlusCircle, AlertTriangle, Database, Sparkles, Brain, Library
+  PlusCircle, AlertTriangle, Database, Sparkles, Brain, Library, Radio
 } from 'lucide-react'
 
 const navItems = [
   { section: 'Overview' },
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/live', icon: Radio, label: 'Live Feed' },
   { section: 'Payments' },
   { to: '/payments', icon: ArrowRightLeft, label: 'All Payments' },
   { to: '/payments/new', icon: PlusCircle, label: 'New Payment' },
