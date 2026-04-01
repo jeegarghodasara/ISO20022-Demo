@@ -1,238 +1,503 @@
+/* ==========================================================================
+   MongoDB LeafyGreen Design System — Dark Mode
+   Palette: https://github.com/mongodb/leafygreen-ui/blob/main/packages/palette
+   Tokens:  https://github.com/mongodb/leafygreen-ui/blob/main/packages/tokens
+   ========================================================================== */
+
 :root {
-  --bg-primary: #0f1117;
-  --bg-secondary: #1a1d27;
-  --bg-card: #1e2130;
-  --bg-hover: #252838;
-  --border: #2d3148;
-  --text-primary: #e8eaed;
-  --text-secondary: #9aa0b4;
-  --text-muted: #6b7089;
-  --accent: #00ed64;
-  --accent-dark: #00c853;
-  --accent-bg: rgba(0, 237, 100, 0.1);
-  --blue: #3b82f6;
-  --blue-bg: rgba(59, 130, 246, 0.1);
-  --purple: #a855f7;
-  --purple-bg: rgba(168, 85, 247, 0.1);
-  --orange: #f59e0b;
-  --orange-bg: rgba(245, 158, 11, 0.1);
-  --red: #ef4444;
-  --red-bg: rgba(239, 68, 68, 0.1);
-  --teal: #14b8a6;
-  --teal-bg: rgba(20, 184, 166, 0.1);
-  --mongodb-green: #00ed64;
-  --radius: 8px;
+  /* --- LeafyGreen Palette (Dark Mode) --- */
+  --bg-primary: #001E2B;       /* palette.black */
+  --bg-secondary: #112733;     /* gray.dark4 */
+  --bg-card: #1C2D38;          /* gray.dark3 */
+  --bg-hover: #3D4F58;         /* gray.dark2 */
+  --border: #3D4F58;           /* gray.dark2 */
+  --border-subtle: #1C2D38;    /* gray.dark3 */
+
+  --text-primary: #FFFFFF;     /* palette.white */
+  --text-secondary: #C1C7C6;   /* gray.light1 */
+  --text-muted: #889397;       /* gray.base */
+
+  /* --- LeafyGreen Brand Colors --- */
+  --accent: #00ED64;           /* green.base */
+  --accent-dark: #00A35C;      /* green.dark1 */
+  --accent-bg: rgba(0, 237, 100, 0.12);
+  --green-dark2: #00684A;      /* green.dark2 */
+  --green-light1: #71F6BA;     /* green.light1 */
+  --green-light2: #C0FAE6;     /* green.light2 */
+  --green-light3: #E3FCF7;     /* green.light3 */
+
+  --blue: #016BF8;             /* blue.base */
+  --blue-dark1: #1254B7;       /* blue.dark1 */
+  --blue-light1: #0498EC;      /* blue.light1 */
+  --blue-bg: rgba(1, 107, 248, 0.12);
+
+  --purple: #B45AF2;           /* purple.base */
+  --purple-dark2: #5E0C9E;     /* purple.dark2 */
+  --purple-bg: rgba(180, 90, 242, 0.12);
+
+  --yellow: #FFC010;           /* yellow.base */
+  --orange: #FFC010;           /* yellow.base (LeafyGreen uses yellow, not orange) */
+  --orange-bg: rgba(255, 192, 16, 0.12);
+  --yellow-light3: #FEF7DB;    /* yellow.light3 */
+
+  --red: #DB3030;              /* red.base */
+  --red-light1: #FF6960;       /* red.light1 */
+  --red-bg: rgba(219, 48, 48, 0.12);
+
+  --teal: #00A35C;             /* green.dark1 — used as secondary green */
+  --teal-bg: rgba(0, 163, 92, 0.12);
+
+  --mongodb-green: #00ED64;    /* green.base */
+
+  /* --- LeafyGreen Spacing Tokens --- */
+  --space-100: 4px;
+  --space-200: 8px;
+  --space-300: 12px;
+  --space-400: 16px;
+  --space-600: 24px;
+  --space-800: 32px;
+
+  /* --- LeafyGreen Radii --- */
+  --radius: 6px;
   --radius-lg: 12px;
+
+  /* --- LeafyGreen Font Families --- */
+  --font-family: 'Euclid Circular A', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-code: 'Source Code Pro', Menlo, monospace;
+
+  /* --- LeafyGreen Type Scale --- */
+  --font-body1: 13px;
+  --font-body2: 16px;
+  --font-code1: 13px;
+  --font-disclaimer: 12px;
+  --font-large: 18px;
+  --line-body1: 20px;
+  --line-body2: 28px;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  font-family: var(--font-family);
   background: var(--bg-primary);
   color: var(--text-primary);
-  line-height: 1.6;
+  font-size: var(--font-body1);
+  line-height: var(--line-body1);
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
+a { color: var(--blue-light1); text-decoration: none; }
+a:hover { text-decoration: underline; color: var(--blue); }
 
-.app-layout { display: flex; min-height: 100vh; }
+/* ==========================================================================
+   Layout — Fixed Top Header + Side Nav
+   ========================================================================== */
 
-.sidebar {
-  width: 260px;
-  background: var(--bg-secondary);
-  border-right: 1px solid var(--border);
-  padding: 20px 0;
+.app-layout { display: flex; min-height: 100vh; padding-top: 48px; }
+
+/* --- Fixed Top Header --- */
+.top-header {
   position: fixed;
-  top: 0; left: 0; bottom: 0;
+  top: 0; left: 0; right: 0;
+  height: 48px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-600);
+  z-index: 200;
+}
+.top-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-300);
+}
+.top-header-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+.top-header-right {
+  position: absolute;
+  right: var(--space-600);
+  display: flex;
+  align-items: center;
+  gap: var(--space-200);
+}
+.top-header-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-primary);
+}
+
+/* --- Sidebar --- */
+.sidebar {
+  width: 240px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-subtle);
+  padding: var(--space-300) 0;
+  position: fixed;
+  top: 48px; left: 0; bottom: 0;
   overflow-y: auto;
   z-index: 100;
 }
 
-.sidebar-logo {
-  padding: 0 20px 20px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 12px;
-}
-.sidebar-logo h1 {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.sidebar-logo h1 .logo-icon { color: var(--mongodb-green); }
-.sidebar-logo p {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 4px;
-}
-
 .sidebar-section {
-  padding: 8px 12px 4px;
+  padding: 12px var(--space-300) var(--space-100);
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 1.2px;
   color: var(--text-muted);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .sidebar-link {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 20px;
+  padding: 8px var(--space-600);
   color: var(--text-secondary);
-  font-size: 13.5px;
+  font-size: var(--font-body1);
   font-weight: 500;
-  transition: all 0.15s;
+  transition: background 0.15s, color 0.15s;
   border-left: 3px solid transparent;
 }
 .sidebar-link:hover {
-  background: var(--bg-hover);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text-primary);
   text-decoration: none;
 }
 .sidebar-link.active {
-  color: var(--accent);
-  background: var(--accent-bg);
+  color: var(--green-light1);
+  background: rgba(0, 237, 100, 0.08);
   border-left-color: var(--accent);
+  font-weight: 600;
 }
 .sidebar-link svg { width: 18px; height: 18px; flex-shrink: 0; }
 
+/* --- Main Content --- */
 .main-content {
   flex: 1;
-  margin-left: 260px;
-  padding: 24px 32px;
-  min-height: 100vh;
+  margin-left: 240px;
+  padding: var(--space-600) var(--space-800);
+  min-height: calc(100vh - 48px);
 }
 
-.page-header { margin-bottom: 24px; }
-.page-header h2 { font-size: 22px; font-weight: 700; }
-.page-header p { color: var(--text-secondary); font-size: 13.5px; margin-top: 4px; }
+/* ==========================================================================
+   Page Header
+   ========================================================================== */
+
+.page-header { margin-bottom: var(--space-600); }
+.page-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  color: var(--text-primary);
+}
+.page-header p {
+  color: var(--text-secondary);
+  font-size: var(--font-body1);
+  margin-top: var(--space-100);
+  line-height: var(--line-body1);
+}
+
+/* ==========================================================================
+   Cards — LeafyGreen Card component
+   ========================================================================== */
 
 .card {
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  padding: 20px;
+  padding: var(--space-600);
+  transition: border-color 0.15s;
+}
+.card:hover {
+  border-color: var(--border);
 }
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-400);
 }
 .card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
-.card-subtitle { font-size: 12px; color: var(--text-muted); }
+.card-subtitle { font-size: var(--font-disclaimer); color: var(--text-muted); }
 
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-.grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
+/* ==========================================================================
+   Grids — LeafyGreen Spacing Tokens
+   ========================================================================== */
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-400); }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-400); }
+.grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: var(--space-400); }
+
+/* ==========================================================================
+   Stat Cards
+   ========================================================================== */
 
 .stat-card {
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  padding: 18px;
+  padding: var(--space-600);
 }
 .stat-card .stat-icon {
   width: 40px; height: 40px;
   border-radius: var(--radius);
   display: flex; align-items: center; justify-content: center;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-300);
 }
-.stat-card .stat-value { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
-.stat-card .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.stat-card .stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+}
+.stat-card .stat-label {
+  font-size: var(--font-disclaimer);
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   Tables — LeafyGreen Table component
+   ========================================================================== */
 
 .table-container { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th {
-  text-align: left; padding: 10px 12px; font-weight: 600;
-  color: var(--text-muted); font-size: 11px; text-transform: uppercase;
-  letter-spacing: 0.5px; border-bottom: 1px solid var(--border); white-space: nowrap;
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-body1);
 }
-td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text-secondary); }
-tr:hover td { background: var(--bg-hover); }
+th {
+  text-align: left;
+  padding: 10px var(--space-300);
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  background: var(--bg-secondary);
+}
+td {
+  padding: 10px var(--space-300);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ==========================================================================
+   Badges — LeafyGreen Badge component
+   ========================================================================== */
 
 .badge {
-  display: inline-flex; align-items: center; padding: 3px 10px;
-  border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  line-height: 18px;
 }
 .badge-success { background: var(--accent-bg); color: var(--accent); }
-.badge-blue { background: var(--blue-bg); color: var(--blue); }
+.badge-blue { background: var(--blue-bg); color: var(--blue-light1); }
 .badge-purple { background: var(--purple-bg); color: var(--purple); }
 .badge-orange { background: var(--orange-bg); color: var(--orange); }
-.badge-red { background: var(--red-bg); color: var(--red); }
+.badge-red { background: var(--red-bg); color: var(--red-light1); }
 .badge-teal { background: var(--teal-bg); color: var(--teal); }
 
+/* ==========================================================================
+   Buttons — LeafyGreen Button component
+   ========================================================================== */
+
 .btn {
-  display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
-  border-radius: var(--radius); font-size: 13px; font-weight: 600;
-  cursor: pointer; border: 1px solid var(--border);
-  background: var(--bg-card); color: var(--text-primary); transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px var(--space-400);
+  border-radius: var(--radius);
+  font-size: var(--font-body1);
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  transition: background 0.15s, border-color 0.15s;
+  font-family: var(--font-family);
 }
-.btn:hover { background: var(--bg-hover); }
-.btn-primary { background: var(--accent); color: #000; border-color: var(--accent); }
-.btn-primary:hover { background: var(--accent-dark); }
-.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--text-muted);
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--accent);
+  color: var(--bg-primary);
+  border-color: var(--accent);
+  font-weight: 700;
+}
+.btn-primary:hover {
+  background: var(--accent-dark);
+  border-color: var(--accent-dark);
+}
+.btn-sm { padding: 5px 10px; font-size: var(--font-disclaimer); }
 
-.form-group { margin-bottom: 16px; }
+/* ==========================================================================
+   Forms — LeafyGreen Text Input / Select
+   ========================================================================== */
+
+.form-group { margin-bottom: var(--space-400); }
 .form-group label {
-  display: block; font-size: 12px; font-weight: 600;
-  color: var(--text-secondary); margin-bottom: 6px;
+  display: block;
+  font-size: var(--font-disclaimer);
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-100);
 }
-.form-group input, .form-group select, .form-group textarea {
-  width: 100%; padding: 9px 12px; background: var(--bg-primary);
-  border: 1px solid var(--border); border-radius: var(--radius);
-  color: var(--text-primary); font-size: 13px; font-family: inherit;
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 8px var(--space-300);
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: var(--font-body1);
+  font-family: var(--font-family);
+  line-height: var(--line-body1);
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-  outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg);
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-bg);
 }
 
-.search-bar { position: relative; margin-bottom: 16px; }
+/* ==========================================================================
+   Search Bar — LeafyGreen Search Input
+   ========================================================================== */
+
+.search-bar { position: relative; margin-bottom: var(--space-400); }
 .search-bar input {
-  width: 100%; padding: 10px 12px 10px 40px; background: var(--bg-primary);
-  border: 1px solid var(--border); border-radius: var(--radius);
-  color: var(--text-primary); font-size: 13px;
+  width: 100%;
+  padding: 10px var(--space-300) 10px 40px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: var(--font-body1);
+  font-family: var(--font-family);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.search-bar input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-bg);
 }
 .search-bar svg {
   position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
   color: var(--text-muted); width: 16px; height: 16px;
 }
 
-.filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+/* ==========================================================================
+   Filters
+   ========================================================================== */
+
+.filters { display: flex; gap: 10px; margin-bottom: var(--space-400); flex-wrap: wrap; }
 .filters select {
-  padding: 7px 12px; background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius); color: var(--text-primary); font-size: 12px;
+  padding: 6px var(--space-300);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: var(--font-disclaimer);
+  font-family: var(--font-family);
+  transition: border-color 0.15s;
+}
+.filters select:focus {
+  outline: none;
+  border-color: var(--blue);
 }
 
+/* ==========================================================================
+   Pagination
+   ========================================================================== */
+
 .pagination {
-  display: flex; align-items: center; justify-content: space-between;
-  padding-top: 12px; font-size: 12px; color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-300);
+  font-size: var(--font-disclaimer);
+  color: var(--text-muted);
 }
 .pagination-buttons { display: flex; gap: 6px; }
 
-.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.detail-section { margin-bottom: 20px; }
+/* ==========================================================================
+   Detail Layout
+   ========================================================================== */
+
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-600); }
+.detail-section { margin-bottom: var(--space-600); }
 .detail-section h4 {
-  font-size: 13px; font-weight: 600; color: var(--text-muted);
-  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
-  padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  font-size: var(--font-body1);
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-300);
+  padding-bottom: var(--space-200);
+  border-bottom: 1px solid var(--border-subtle);
 }
-.detail-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: var(--font-body1);
+}
 .detail-row .label { color: var(--text-muted); }
-.detail-row .value { color: var(--text-primary); font-weight: 500; text-align: right; word-break: break-all; }
+.detail-row .value {
+  color: var(--text-primary);
+  font-weight: 500;
+  text-align: right;
+  word-break: break-all;
+}
+
+/* ==========================================================================
+   Timeline
+   ========================================================================== */
 
 .timeline { padding: 0; list-style: none; }
-.timeline-item { display: flex; gap: 12px; padding: 8px 0; position: relative; }
+.timeline-item {
+  display: flex;
+  gap: var(--space-300);
+  padding: var(--space-200) 0;
+  position: relative;
+}
 .timeline-item::before {
   content: ''; position: absolute; left: 7px; top: 24px; bottom: -8px;
-  width: 2px; background: var(--border);
+  width: 2px; background: var(--border-subtle);
 }
 .timeline-item:last-child::before { display: none; }
 .timeline-dot {
@@ -241,42 +506,89 @@ tr:hover td { background: var(--bg-hover); }
   flex-shrink: 0; margin-top: 2px;
 }
 .timeline-content { flex: 1; }
-.timeline-status { font-size: 13px; font-weight: 600; }
+.timeline-status { font-size: var(--font-body1); font-weight: 600; }
 .timeline-time { font-size: 11px; color: var(--text-muted); }
 
+/* ==========================================================================
+   Value Proposition Cards
+   ========================================================================== */
+
 .value-prop-card {
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); padding: 24px;
-  transition: all 0.2s; cursor: pointer;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-600);
+  transition: all 0.2s;
+  cursor: pointer;
 }
 .value-prop-card:hover {
-  border-color: var(--accent); transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0, 237, 100, 0.1);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 24px rgba(0, 237, 100, 0.08);
 }
 .value-prop-card .vp-icon {
-  width: 48px; height: 48px; border-radius: var(--radius);
+  width: 48px; height: 48px;
+  border-radius: var(--radius);
   display: flex; align-items: center; justify-content: center;
-  margin-bottom: 14px; background: var(--accent-bg); color: var(--accent);
+  margin-bottom: 14px;
+  background: var(--accent-bg);
+  color: var(--accent);
 }
-.value-prop-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-.value-prop-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+.value-prop-card h3 {
+  font-size: var(--font-body2);
+  font-weight: 700;
+  margin-bottom: var(--space-200);
+  letter-spacing: -0.2px;
+}
+.value-prop-card p {
+  font-size: var(--font-body1);
+  color: var(--text-secondary);
+  line-height: var(--line-body1);
+}
 
-.vp-detail { margin-top: 24px; }
-.vp-detail .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-.vp-detail .code-block {
-  background: var(--bg-primary); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 16px;
-  font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
-  line-height: 1.6; overflow-x: auto; white-space: pre-wrap; color: var(--text-secondary);
+/* ==========================================================================
+   Value Prop Detail — Code Blocks
+   ========================================================================== */
+
+.vp-detail { margin-top: var(--space-600); }
+.vp-detail .comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-400);
+  margin-top: var(--space-400);
 }
-.vp-detail .code-block.mongodb { border-color: var(--accent); border-width: 2px; }
+.vp-detail .code-block {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: var(--space-400);
+  font-family: var(--font-code);
+  font-size: var(--font-code1);
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  color: var(--text-secondary);
+}
+.vp-detail .code-block.mongodb {
+  border-color: var(--accent);
+  border-width: 2px;
+}
 .vp-detail .code-label {
-  font-size: 11px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.5px; margin-bottom: 8px; padding: 4px 8px;
-  border-radius: 4px; display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-200);
+  padding: var(--space-100) var(--space-200);
+  border-radius: 4px;
+  display: inline-block;
 }
 .code-label.mongo { background: var(--accent-bg); color: var(--accent); }
-.code-label.sql { background: var(--blue-bg); color: var(--blue); }
+.code-label.sql { background: var(--blue-bg); color: var(--blue-light1); }
+
+/* ==========================================================================
+   States
+   ========================================================================== */
 
 .loading {
   display: flex; align-items: center; justify-content: center;
@@ -285,15 +597,30 @@ tr:hover td { background: var(--bg-hover); }
 .empty-state { text-align: center; padding: 60px; color: var(--text-muted); }
 .empty-state p { font-size: 14px; }
 
-.amount { font-family: 'SF Mono', 'Fira Code', monospace; font-weight: 600; }
+/* ==========================================================================
+   Amounts — monospace financial numbers
+   ========================================================================== */
+
+.amount {
+  font-family: var(--font-code);
+  font-weight: 600;
+}
 .amount.credit { color: var(--accent); }
-.amount.debit { color: var(--red); }
+.amount.debit { color: var(--red-light1); }
+
+/* ==========================================================================
+   Toast
+   ========================================================================== */
 
 .toast {
   position: fixed; bottom: 20px; right: 20px;
-  background: var(--bg-card); border: 1px solid var(--accent);
-  border-radius: var(--radius); padding: 12px 20px;
-  font-size: 13px; color: var(--accent); z-index: 1000;
+  background: var(--bg-card);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: var(--space-300) var(--space-600);
+  font-size: var(--font-body1);
+  color: var(--accent);
+  z-index: 1000;
   animation: slideUp 0.3s ease;
 }
 @keyframes slideUp {
@@ -301,10 +628,16 @@ tr:hover td { background: var(--bg-hover); }
   to { transform: translateY(0); opacity: 1; }
 }
 
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
 @media (max-width: 1200px) { .grid-4 { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 768px) {
+  .top-header { padding: 0 var(--space-400); }
+  .top-header-right { display: none; }
   .sidebar { display: none; }
-  .main-content { margin-left: 0; padding: 16px; }
+  .main-content { margin-left: 0; padding: var(--space-400); }
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   .detail-grid { grid-template-columns: 1fr; }
 }
