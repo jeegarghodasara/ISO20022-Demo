@@ -71,6 +71,10 @@ export const getProcessingTimes = () => fetchJson('/analytics/processing-times')
 export const getValuePropsSummary = () => fetchJson('/value-props/summary');
 export const getValueProp = (name) => fetchJson(`/value-props/${name}`);
 
+// Collection Explorer
+export const getCollections = () => fetchJson('/collections');
+export const getCollectionDetail = (name) => fetchJson(`/collections/${name}`);
+
 // AI Vector Search
 export const getAISearchStatus = () => fetchJson('/ai-search/status');
 export const naturalLanguageSearch = (data) =>

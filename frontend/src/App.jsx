@@ -9,6 +9,7 @@ import StatementDetail from './pages/StatementDetail'
 import Investigations from './pages/Investigations'
 import ValueProps from './pages/ValueProps'
 import AISearch from './pages/AISearch'
+import Collections from './pages/Collections'
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/investigations" element={<Investigations />} />
         <Route path="/ai-search" element={<AISearch />} />
         <Route path="/value-props" element={<ValueProps />} />
+        <Route path="/collections" element={<Collections />} />
       </Routes>
     </Layout>
   )

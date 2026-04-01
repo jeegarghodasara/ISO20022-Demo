@@ -481,6 +481,38 @@ export default function ValueProps() {
             </div>
           )}
 
+          {/* Aggregation: pipeline JSON */}
+          {detail.pipelineJson && (
+            <div style={{ marginTop: 16 }}>
+              <h4 style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 10 }}>
+                Aggregation Pipeline
+              </h4>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 10 }}>
+                This pipeline runs a <strong style={{ color: 'var(--accent)' }}>$facet</strong> stage that executes
+                5 aggregations in a single pass across all polymorphic payment types — no UNIONs, no multiple queries.
+              </p>
+              <pre style={{
+                background: 'var(--bg-primary)',
+                border: '1px solid var(--accent)',
+                borderRadius: 'var(--radius)',
+                padding: 16,
+                fontSize: 11.5,
+                lineHeight: 1.55,
+                overflow: 'auto',
+                maxHeight: 500,
+                fontFamily: "'SF Mono', 'Fira Code', monospace",
+                color: 'var(--text-secondary)',
+                whiteSpace: 'pre-wrap',
+                margin: 0,
+              }}>
+                <span style={{ color: 'var(--text-muted)' }}>{'// Single pipeline replaces 5 separate SQL GROUP BY queries\n\n'}</span>
+                <span style={{ color: 'var(--blue)' }}>db.payments.aggregate</span>{'(\n'}
+                {JSON.stringify(detail.pipelineJson, null, 2)}
+                {'\n)'}
+              </pre>
+            </div>
+          )}
+
           {/* Aggregation: live results */}
           {detail.results && (
             <div style={{ marginTop: 16 }}>

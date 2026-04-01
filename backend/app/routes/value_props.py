@@ -337,7 +337,8 @@ async def demo_aggregation_power():
         "benefit": "No data movement to app layer. Real-time analytics on live data. "
         "Single pipeline replaces multiple SQL queries with GROUP BY. "
         "Works across all polymorphic document types in one pass.",
-        "pipeline": "$facet with 5 parallel aggregations (byStatus, byCurrency, byMessageType, byCountryCorridor, totalStats)",
+        "pipelineSummary": "$facet with 5 parallel aggregations (byStatus, byCurrency, byMessageType, byCountryCorridor, totalStats)",
+        "pipelineJson": pipeline,
         "results": result[0] if result else {},
     }
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Code, ChevronDown, ChevronRight as ChevronRightIcon } from 'lucide-react'
 import { getPayments, searchPayments } from '../services/api'
 import StatusBadge from '../components/StatusBadge'
 import MessageTypeBadge from '../components/MessageTypeBadge'
@@ -16,6 +16,94 @@ function formatAmount(val, currency) {
   return `${currency || ''} ${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
+function buildMongoQuery({ searchQuery, status, currency, messageType, page, limit }) {
+  if (searchQuery) {
+    return {
+      method: 'find',
+      query: {
+        $or: [
+          { uetr: { $regex: searchQuery, $options: 'i' } },
+          { endToEndId: { $regex: searchQuery, $options: 'i' } },
+          { 'debtor.name': { $regex: searchQuery, $options: 'i' } },
+          { 'creditor.name': { $regex: searchQuery, $options: 'i' } },
+          { messageId: { $regex: searchQuery, $options: 'i' } },
+        ],
+      },
+      sort: { createdAt: -1 },
+      limit: 50,
+    }
+  }
+
+  const query = {}
+  if (status) query.status = status
+  if (currency) query.settlementCurrency = currency
+  if (messageType) query.messageType = messageType
+
+  return {
+    method: 'find',
+    query,
+    sort: { settlementDate: -1 },
+    skip: (page - 1) * limit,
+    limit,
+  }
+}
+
+function QueryPreview({ searchQuery, status, currency, messageType, page, visible }) {
+  const [expanded, setExpanded] = useState(true)
+  if (!visible) return null
+
+  const q = buildMongoQuery({ searchQuery, status, currency, messageType, page, limit: 20 })
+  const hasFilters = searchQuery || status || currency || messageType
+
+  const queryLines = [`db.payments.${q.method}(`]
+  queryLines.push(`  ${JSON.stringify(q.query, null, 2).split('\n').join('\n  ')}`)
+  queryLines.push(')')
+  if (q.sort) queryLines.push(`.sort(${JSON.stringify(q.sort)})`)
+  if (q.skip) queryLines.push(`.skip(${q.skip})`)
+  queryLines.push(`.limit(${q.limit})`)
+
+  return (
+    <div style={{
+      marginBottom: 16, background: 'var(--bg-card)',
+      border: '1px solid var(--blue)', borderRadius: 'var(--radius)', padding: '12px 16px',
+    }}>
+      <div
+        onClick={() => setExpanded(!expanded)}
+        style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+      >
+        {expanded
+          ? <ChevronDown size={14} style={{ color: 'var(--blue)' }} />
+          : <ChevronRightIcon size={14} style={{ color: 'var(--blue)' }} />
+        }
+        <Code size={14} style={{ color: 'var(--blue)' }} />
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--blue)' }}>
+          MongoDB Query
+        </span>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 'auto' }}>
+          {searchQuery
+            ? `$or text search across 5 fields`
+            : hasFilters
+              ? `Filtered query on polymorphic collection`
+              : `Full collection scan with sort`
+          }
+        </span>
+      </div>
+      {expanded && (
+        <pre style={{
+          background: 'var(--bg-primary)', border: '1px solid var(--blue)',
+          borderRadius: 'var(--radius)', padding: 14, marginTop: 10,
+          fontSize: 12, lineHeight: 1.6, overflow: 'auto', maxHeight: 300,
+          fontFamily: "'SF Mono', 'Fira Code', monospace",
+          color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', margin: '10px 0 0 0',
+        }}>
+          <span style={{ color: 'var(--text-muted)' }}>{'// Query sent to MongoDB — single collection, all payment types\n\n'}</span>
+          {queryLines.join('\n')}
+        </pre>
+      )}
+    </div>
+  )
+}
+
 export default function Payments() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [payments, setPayments] = useState([])
@@ -23,6 +111,7 @@ export default function Payments() {
   const [pages, setPages] = useState(1)
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [activeSearch, setActiveSearch] = useState('')
 
   const page = parseInt(searchParams.get('page') || '1')
   const status = searchParams.get('status') || ''
@@ -44,12 +133,14 @@ export default function Payments() {
       })
       .catch(console.error)
       .finally(() => setLoading(false))
+    setActiveSearch('')
   }, [page, status, currency, messageType])
 
   const handleSearch = async (e) => {
     e.preventDefault()
     if (!searchQuery.trim()) return
     setLoading(true)
+    setActiveSearch(searchQuery)
     try {
       const res = await searchPayments(searchQuery)
       setPayments(res.data)
@@ -121,6 +212,15 @@ export default function Payments() {
           ))}
         </select>
       </div>
+
+      <QueryPreview
+        searchQuery={activeSearch}
+        status={status}
+        currency={currency}
+        messageType={messageType}
+        page={page}
+        visible={!loading && (activeSearch || status || currency || messageType)}
+      />
 
       <div className="card">
         {loading ? (
