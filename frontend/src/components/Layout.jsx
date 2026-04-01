@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, ArrowRightLeft, FileText, Search,
-  PlusCircle, AlertTriangle, Database, Sparkles
+  PlusCircle, AlertTriangle, Database, Sparkles, Brain
 } from 'lucide-react'
 
 const navItems = [
@@ -14,6 +14,8 @@ const navItems = [
   { to: '/statements', icon: FileText, label: 'Statements' },
   { section: 'Operations' },
   { to: '/investigations', icon: AlertTriangle, label: 'Investigations' },
+  { section: 'AI & Search' },
+  { to: '/ai-search', icon: Brain, label: 'AI Search' },
   { section: 'MongoDB' },
   { to: '/value-props', icon: Sparkles, label: 'Value Propositions' },
 ]

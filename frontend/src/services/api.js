@@ -70,3 +70,12 @@ export const getProcessingTimes = () => fetchJson('/analytics/processing-times')
 // Value Props
 export const getValuePropsSummary = () => fetchJson('/value-props/summary');
 export const getValueProp = (name) => fetchJson(`/value-props/${name}`);
+
+// AI Vector Search
+export const getAISearchStatus = () => fetchJson('/ai-search/status');
+export const naturalLanguageSearch = (data) =>
+  fetchJson('/ai-search/natural-language', { method: 'POST', body: JSON.stringify(data) });
+export const findSimilarTransactions = (data) =>
+  fetchJson('/ai-search/similar-transactions', { method: 'POST', body: JSON.stringify(data) });
+export const remittanceMatch = (data) =>
+  fetchJson('/ai-search/remittance-match', { method: 'POST', body: JSON.stringify(data) });

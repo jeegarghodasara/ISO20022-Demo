@@ -11,6 +11,7 @@ from app.routes import (
     initiations,
     mandates,
     value_props,
+    ai_search,
 )
 
 
@@ -50,6 +51,7 @@ app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"]
 app.include_router(
     value_props.router, prefix="/api/value-props", tags=["MongoDB Value Props"]
 )
+app.include_router(ai_search.router, prefix="/api/ai-search", tags=["AI Vector Search"])
 
 
 @app.get("/api/health")
