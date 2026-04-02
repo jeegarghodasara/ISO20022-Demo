@@ -16,7 +16,7 @@ from typing import List, Optional
 from app.config import settings
 
 ATLAS_AI_URL = "https://ai.mongodb.com/v1/embeddings"
-EMBEDDING_MODEL = "voyage-finance-2"
+EMBEDDING_MODEL = "voyage-4-large"
 EMBEDDING_DIMENSIONS = 1024
 
 

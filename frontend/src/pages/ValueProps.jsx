@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import {
-  FileText, Layers, BarChart3, ShieldCheck, Zap, Calculator, Clock, Database, Brain
+  FileText, Layers, BarChart3, ShieldCheck, Zap, Calculator, Clock, Database, Brain, Search
 } from 'lucide-react'
 import { getValuePropsSummary, getValueProp } from '../services/api'
 
 const iconMap = {
-  FileText, Layers, BarChart3, ShieldCheck, Zap, Calculator, Clock, Database, Brain,
+  FileText, Layers, BarChart3, ShieldCheck, Zap, Calculator, Clock, Database, Brain, Search,
 }
 
 const TYPE_COLORS = {
@@ -629,7 +629,7 @@ export default function ValueProps() {
             </div>
           )}
 
-          {/* Vector Search: relational alternative */}
+          {/* Vector Search / Indexing: relational alternative */}
           {detail.relationalAlternative && detail.relationalAlternative.problems && (
             <div style={{ marginTop: 16, background: 'var(--orange-bg, rgba(245, 158, 11, 0.08))', border: '1px solid var(--orange)', borderRadius: 'var(--radius)', padding: 16 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--orange)', marginBottom: 8 }}>
@@ -640,6 +640,98 @@ export default function ValueProps() {
                   <li key={i} style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>{p}</li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {/* Indexing: stats */}
+          {detail.stats && detail.categories && (
+            <div style={{ marginTop: 16 }}>
+              <h4 style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 10 }}>Index Statistics</h4>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
+                {[
+                  { label: 'Total Indexes', value: detail.stats.totalIndexesAcrossCollections, color: 'var(--accent)' },
+                  { label: 'Payment Indexes', value: detail.stats.paymentCollectionIndexes, color: 'var(--blue)' },
+                  { label: 'Vector Indexes', value: detail.stats.vectorSearchIndexes, color: 'var(--purple)' },
+                ].map(s => (
+                  <div key={s.label} style={{
+                    background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius)', padding: '10px 18px', textAlign: 'center', minWidth: 110,
+                  }}>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: s.color }}>{s.value}</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Indexing: categories */}
+          {detail.categories && (
+            <div style={{ marginTop: 16 }}>
+              {Object.entries(detail.categories).map(([key, cat]) => (
+                <div key={key} style={{ marginBottom: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{cat.label}</span>
+                    <span className="badge badge-blue" style={{ fontSize: 10 }}>{cat.count}</span>
+                  </div>
+                  <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 10, lineHeight: 1.6 }}>{cat.description}</p>
+                  {cat.examples && cat.examples.length > 0 && (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 8 }}>
+                      {cat.examples.map((idx, i) => (
+                        <pre key={i} style={{
+                          background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)',
+                          borderRadius: 'var(--radius)', padding: 10,
+                          fontSize: 11, lineHeight: 1.5, overflow: 'auto', maxHeight: 200,
+                          fontFamily: 'var(--font-code)', color: 'var(--text-secondary)',
+                          whiteSpace: 'pre-wrap', margin: 0,
+                        }}>
+                          <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{idx.name}</span>{'\n'}
+                          {JSON.stringify(
+                            Object.fromEntries(
+                              Object.entries(idx).filter(([k]) => k !== 'name' && idx[k] !== false && idx[k] !== null && idx[k] !== undefined)
+                            ), null, 2
+                          )}
+                        </pre>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Indexing: partial vs full comparison */}
+          {detail.partialVsFullComparison && (
+            <div style={{ marginTop: 16 }}>
+              <h4 style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8 }}>{detail.partialVsFullComparison.title}</h4>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12, lineHeight: 1.6 }}>
+                {detail.partialVsFullComparison.description}
+              </p>
+              <div className="grid-2">
+                {detail.partialVsFullComparison.examples.map((ex, i) => {
+                  const isBetter = !!ex.benefit
+                  return (
+                    <div key={i} style={{
+                      background: 'var(--bg-primary)',
+                      border: `1px solid ${isBetter ? 'var(--accent)' : 'var(--red)'}`,
+                      borderRadius: 'var(--radius)', padding: 14,
+                    }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: isBetter ? 'var(--accent)' : 'var(--red)', marginBottom: 8 }}>
+                        {isBetter ? '\u2713' : '\u2717'} {ex.name}
+                      </div>
+                      <pre style={{
+                        fontSize: 11, fontFamily: 'var(--font-code)', color: 'var(--text-secondary)',
+                        whiteSpace: 'pre-wrap', margin: '0 0 8px 0', lineHeight: 1.5,
+                      }}>
+                        {JSON.stringify(ex.definition, null, 2)}
+                      </pre>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Scope: {ex.scope}</div>
+                      {ex.problem && <div style={{ fontSize: 11, color: 'var(--red)', marginTop: 4 }}>{ex.problem}</div>}
+                      {ex.benefit && <div style={{ fontSize: 11, color: 'var(--accent)', marginTop: 4 }}>{ex.benefit}</div>}
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
         </div>

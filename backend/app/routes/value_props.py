@@ -626,6 +626,175 @@ async def demo_vector_search():
     }
 
 
+@router.get("/indexing-strategies")
+async def demo_indexing_strategies():
+    """
+    Demonstrates MongoDB's rich indexing capabilities for payment workloads:
+    compound indexes, partial indexes, TTL indexes, unique constraints,
+    nested field indexes, and vector search indexes.
+    """
+    db = get_database()
+
+    # Gather live index info from the payments collection
+    regular_indexes = []
+    async for idx in db.payments.list_indexes():
+        info = {
+            "name": idx.get("name", ""),
+            "key": {
+                k: ("ASC" if v == 1 else "DESC" if v == -1 else str(v))
+                for k, v in idx.get("key", {}).items()
+            },
+            "unique": idx.get("unique", False),
+            "sparse": idx.get("sparse", False),
+            "expireAfterSeconds": idx.get("expireAfterSeconds"),
+            "partialFilterExpression": idx.get("partialFilterExpression"),
+        }
+        regular_indexes.append(info)
+
+    search_indexes = []
+    try:
+        async for idx in db.payments.list_search_indexes():
+            search_indexes.append(
+                {
+                    "name": idx.get("name", ""),
+                    "type": idx.get("type", "search"),
+                    "status": idx.get("status", ""),
+                    "queryable": idx.get("queryable", False),
+                }
+            )
+    except Exception:
+        pass
+
+    # Categorize indexes for display
+    unique_indexes = [i for i in regular_indexes if i["unique"]]
+    compound_indexes = [
+        i
+        for i in regular_indexes
+        if len(i["key"]) > 1 and not i.get("partialFilterExpression")
+    ]
+    partial_indexes = [i for i in regular_indexes if i.get("partialFilterExpression")]
+    ttl_indexes = [
+        i for i in regular_indexes if i.get("expireAfterSeconds") is not None
+    ]
+    nested_indexes = [i for i in regular_indexes if any("." in k for k in i["key"])]
+
+    # Count total indexes across key collections
+    collections_to_check = [
+        "payments",
+        "agent_memory",
+        "agent_messages",
+        "investigations",
+        "statements",
+    ]
+    total_indexes = 0
+    for coll_name in collections_to_check:
+        try:
+            count = 0
+            async for _ in db[coll_name].list_indexes():
+                count += 1
+            total_indexes += count
+        except Exception:
+            pass
+
+    return {
+        "title": "Indexing Strategies - Query Performance at Scale",
+        "description": "MongoDB supports a rich set of index types to optimize every query pattern "
+        "in a payment system. This demo uses compound indexes for multi-field queries, partial indexes "
+        "to index only a subset of documents (e.g., only rejected payments or only pacs.004 returns), "
+        "TTL indexes for automatic data expiry, unique constraints for business keys, nested field "
+        "indexes for querying embedded documents, and vector search indexes for AI-powered search.",
+        "benefit": "Partial indexes are a unique MongoDB advantage -- they index only documents matching "
+        "a filter, saving storage and improving write performance. For a polymorphic collection, this "
+        "means you can create type-specific indexes that only cover relevant documents. A partial index "
+        "on returnReason.code WHERE messageType='pacs.004' is tiny compared to indexing every payment.",
+        "stats": {
+            "totalIndexesAcrossCollections": total_indexes,
+            "paymentCollectionIndexes": len(regular_indexes),
+            "vectorSearchIndexes": len(search_indexes),
+        },
+        "categories": {
+            "compound": {
+                "label": "Compound Indexes",
+                "description": "Multi-field indexes that support queries filtering or sorting on multiple fields. "
+                "MongoDB uses index prefix compression -- a compound index on {messageType, status, settlementDate} "
+                "also satisfies queries on just {messageType} or {messageType, status}.",
+                "count": len(compound_indexes),
+                "examples": compound_indexes[:5],
+            },
+            "partial": {
+                "label": "Partial Indexes",
+                "description": "Index only the documents that match a filter expression. Perfect for polymorphic "
+                "collections where type-specific fields only exist on a subset of documents. Dramatically reduces "
+                "index size and write overhead compared to indexing every document.",
+                "count": len(partial_indexes),
+                "examples": partial_indexes,
+            },
+            "unique": {
+                "label": "Unique Indexes",
+                "description": "Enforce uniqueness on business keys like UETR, messageId, and statementId. "
+                "Prevents duplicate payments at the database level -- no application logic needed.",
+                "count": len(unique_indexes),
+                "examples": unique_indexes[:4],
+            },
+            "ttl": {
+                "label": "TTL Indexes",
+                "description": "Automatically expire documents after a specified duration. "
+                "Used for notifications (90 days), status reports (1 year), agent messages (24 hours), "
+                "and episodic agent memory (variable TTL per document).",
+                "count": len(ttl_indexes),
+                "examples": ttl_indexes[:4],
+            },
+            "nested": {
+                "label": "Nested Field Indexes",
+                "description": "Index fields inside embedded documents and arrays. "
+                "Query debtor.account.iban or creditor.address.country with full index support -- "
+                "no separate table, no JOIN, just dot notation.",
+                "count": len(nested_indexes),
+                "examples": nested_indexes[:4],
+            },
+            "vectorSearch": {
+                "label": "Atlas Vector Search Indexes",
+                "description": "Dedicated indexes for vector similarity search with pre-filtering. "
+                "Used for AI-powered payment search, remittance matching, and agent memory recall.",
+                "count": len(search_indexes),
+                "examples": search_indexes,
+            },
+        },
+        "partialVsFullComparison": {
+            "title": "Partial Index Advantage",
+            "description": "Compare a partial index (only pacs.004 returns) vs a full index (all payments). "
+            "In a collection with 200+ payments but only ~30 returns, the partial index is 85% smaller.",
+            "examples": [
+                {
+                    "name": "Full index on originalUetr",
+                    "definition": {"key": {"originalUetr": "ASC"}},
+                    "scope": "All 230+ documents",
+                    "problem": "originalUetr only exists on pacs.004 documents -- wastes space indexing NULLs",
+                },
+                {
+                    "name": "Partial index on originalUetr WHERE pacs.004",
+                    "definition": {
+                        "key": {"originalUetr": "ASC"},
+                        "partialFilterExpression": {"messageType": "pacs.004"},
+                    },
+                    "scope": "Only ~30 pacs.004 documents",
+                    "benefit": "85% smaller index, faster writes, same query performance for return lookups",
+                },
+            ],
+        },
+        "relationalAlternative": {
+            "approach": "Postgres: B-tree indexes only, no partial index on polymorphic data without views",
+            "problems": [
+                "No partial indexes on column values (Postgres partial indexes exist but can't filter on type-discriminator columns in a polymorphic table elegantly)",
+                "Table-per-type means separate indexes per table -- no single polymorphic index",
+                "No built-in TTL indexes -- requires pg_cron or triggers",
+                "No vector search indexes -- requires pgvector extension",
+                "Cannot index nested JSON fields efficiently without generated columns",
+            ],
+        },
+    }
+
+
 @router.get("/summary")
 async def value_props_summary():
     """Full summary of MongoDB value propositions for ISO 20022."""
@@ -688,6 +857,13 @@ async def value_props_summary():
                 "Natural language queries, fraud detection, and smart remittance matching -- "
                 "all in the same database, no separate search engine.",
                 "endpoint": "/api/value-props/vector-search",
+            },
+            {
+                "name": "Indexing Strategies",
+                "icon": "Search",
+                "summary": "Compound, partial, TTL, unique, nested field, and vector indexes. "
+                "Partial indexes index only matching documents -- 85% smaller for type-specific queries.",
+                "endpoint": "/api/value-props/indexing-strategies",
             },
         ],
     }

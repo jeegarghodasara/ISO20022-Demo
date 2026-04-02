@@ -72,10 +72,40 @@ async def create_indexes():
     await db.payments.create_index(
         [("batchId", ASCENDING), ("sequenceInBatch", ASCENDING)]
     )
-    # pacs.004 specific: look up returns by original payment
-    await db.payments.create_index([("originalUetr", ASCENDING)])
-    # pain.008 specific: look up direct debits by mandate
-    await db.payments.create_index([("mandateId", ASCENDING)])
+    # pacs.004 specific: look up returns by original payment (partial — only exists on returns)
+    await db.payments.create_index(
+        [("originalUetr", ASCENDING)],
+        partialFilterExpression={"messageType": "pacs.004"},
+        name="idx_returns_originalUetr_partial",
+    )
+    # pain.008 specific: look up direct debits by mandate (partial — only exists on direct debits)
+    await db.payments.create_index(
+        [("mandateId", ASCENDING), ("sequenceType", ASCENDING)],
+        partialFilterExpression={"messageType": "pain.008"},
+        name="idx_directdebit_mandate_partial",
+    )
+    # Partial index: only rejected payments for exception monitoring
+    await db.payments.create_index(
+        [
+            ("status", ASCENDING),
+            ("returnReason.code", ASCENDING),
+            ("createdAt", DESCENDING),
+        ],
+        partialFilterExpression={"status": "RJCT"},
+        name="idx_rejected_payments_partial",
+    )
+    # Partial index: high-priority payments for SLA monitoring
+    await db.payments.create_index(
+        [("priority", ASCENDING), ("settlementDate", ASCENDING), ("status", ASCENDING)],
+        partialFilterExpression={"priority": "HIGH"},
+        name="idx_high_priority_partial",
+    )
+    # Partial index: only payments with embeddings for vector-related queries
+    await db.payments.create_index(
+        [("messageType", ASCENDING), ("createdAt", DESCENDING)],
+        partialFilterExpression={"embedding": {"$exists": True}},
+        name="idx_embedded_payments_partial",
+    )
 
     # payment_initiations collection
     await db.payment_initiations.create_index([("messageId", ASCENDING)], unique=True)
