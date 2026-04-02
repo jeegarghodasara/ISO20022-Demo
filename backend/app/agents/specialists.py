@@ -9,10 +9,13 @@ All agents follow the same pattern:
 5. Store the decision as a new episodic memory
 """
 
+import time
 from datetime import datetime, timezone
 
 from app.database import get_database
 from app.agents.memory import store_memory, recall_memories
+from app.agents.metrics import track_agent_execution
+from app.agents.tool_logger import log_tool_call
 from app.utils.helpers import serialize_doc
 
 
@@ -66,6 +69,16 @@ async def routing_agent_process(
     Analyze a payment and recommend the optimal routing path.
     Uses memory of past routing decisions and real-time corridor data.
     """
+    async with track_agent_execution("routing-agent", conversation_id) as tracker:
+        result = await _routing_agent_impl(payment, question, conversation_id)
+        tracker["decision"] = result.get("decision")
+        tracker["memoriesUsed"] = result.get("memoriesUsed", 0)
+    return result
+
+
+async def _routing_agent_impl(
+    payment: dict, question: str, conversation_id: str
+) -> dict:
     db = get_database()
     agent_id = "routing-agent"
 
@@ -73,6 +86,13 @@ async def routing_agent_process(
     corridor = f"{payment.get('debtor', {}).get('address', {}).get('country', '??')} to {payment.get('creditor', {}).get('address', {}).get('country', '??')}"
     recall_query = f"Route payment {corridor} {payment.get('settlementCurrency', '')} {payment.get('settlementAmount', '')}"
     memories = await recall_memories(agent_id, recall_query, limit=5)
+    await log_tool_call(
+        agent_id,
+        conversation_id,
+        "vector_search:recall_memories",
+        {"query": recall_query[:100]},
+        f"{len(memories)} memories recalled",
+    )
 
     # 2. Query real-time corridor statistics
     from_country = payment.get("debtor", {}).get("address", {}).get("country")
@@ -98,8 +118,17 @@ async def routing_agent_process(
                 }
             },
         ]
+        t0 = time.monotonic()
         results = await db.payments.aggregate(pipeline).to_list(1)
         corridor_stats = results[0] if results else None
+        await log_tool_call(
+            agent_id,
+            conversation_id,
+            "aggregation:corridor_stats",
+            {"corridor": corridor},
+            f"{corridor_stats.get('totalPayments', 0) if corridor_stats else 0} payments found",
+            (time.monotonic() - t0) * 1000,
+        )
 
     # 3. Determine routing recommendation
     routes = []
@@ -204,6 +233,16 @@ async def compliance_agent_process(
     payment: dict, question: str, conversation_id: str
 ) -> dict:
     """Screen a payment for compliance risks."""
+    async with track_agent_execution("compliance-agent", conversation_id) as tracker:
+        result = await _compliance_agent_impl(payment, question, conversation_id)
+        tracker["decision"] = result.get("decision")
+        tracker["memoriesUsed"] = result.get("memoriesUsed", 0)
+    return result
+
+
+async def _compliance_agent_impl(
+    payment: dict, question: str, conversation_id: str
+) -> dict:
     db = get_database()
     agent_id = "compliance-agent"
 
@@ -213,6 +252,13 @@ async def compliance_agent_process(
     # 1. Recall past screening results for these parties
     recall_query = f"Screen {debtor_name} {creditor_name} payment"
     memories = await recall_memories(agent_id, recall_query, limit=5)
+    await log_tool_call(
+        agent_id,
+        conversation_id,
+        "vector_search:recall_memories",
+        {"query": recall_query[:100]},
+        f"{len(memories)} memories recalled",
+    )
 
     # 2. Check payment patterns in MongoDB
     debtor_iban = payment.get("debtor", {}).get("account", {}).get("iban")
@@ -345,6 +391,16 @@ async def exception_agent_process(
     payment: dict, question: str, conversation_id: str
 ) -> dict:
     """Investigate a failed or returned payment and recommend corrective action."""
+    async with track_agent_execution("exception-agent", conversation_id) as tracker:
+        result = await _exception_agent_impl(payment, question, conversation_id)
+        tracker["decision"] = result.get("decision")
+        tracker["memoriesUsed"] = result.get("memoriesUsed", 0)
+    return result
+
+
+async def _exception_agent_impl(
+    payment: dict, question: str, conversation_id: str
+) -> dict:
     db = get_database()
     agent_id = "exception-agent"
 
@@ -480,6 +536,18 @@ async def reconciliation_agent_process(
     payment: dict, question: str, conversation_id: str
 ) -> dict:
     """Match a payment against expected receivables or invoices."""
+    async with track_agent_execution(
+        "reconciliation-agent", conversation_id
+    ) as tracker:
+        result = await _reconciliation_agent_impl(payment, question, conversation_id)
+        tracker["decision"] = result.get("decision")
+        tracker["memoriesUsed"] = result.get("memoriesUsed", 0)
+    return result
+
+
+async def _reconciliation_agent_impl(
+    payment: dict, question: str, conversation_id: str
+) -> dict:
     db = get_database()
     agent_id = "reconciliation-agent"
 
@@ -493,6 +561,13 @@ async def reconciliation_agent_process(
         f"Match payment from {debtor_name} remittance {remittance} {amount} {currency}"
     )
     memories = await recall_memories(agent_id, recall_query, limit=5)
+    await log_tool_call(
+        agent_id,
+        conversation_id,
+        "vector_search:recall_memories",
+        {"query": recall_query[:100]},
+        f"{len(memories)} memories recalled",
+    )
 
     # 2. Search for potential matches using remittance text
     potential_matches = []

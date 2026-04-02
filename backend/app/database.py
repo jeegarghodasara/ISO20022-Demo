@@ -199,6 +199,25 @@ async def create_indexes():
         expireAfterSeconds=86400,  # TTL: 24 hours
     )
 
+    # agent_metrics — performance tracking
+    await db.agent_metrics.create_index(
+        [("agentId", ASCENDING), ("timestamp", DESCENDING)]
+    )
+    await db.agent_metrics.create_index(
+        [("timestamp", ASCENDING)],
+        expireAfterSeconds=2592000,  # TTL: 30 days
+    )
+
+    # agent_tool_logs — audit trail
+    await db.agent_tool_logs.create_index(
+        [("agentId", ASCENDING), ("timestamp", DESCENDING)]
+    )
+    await db.agent_tool_logs.create_index([("conversationId", ASCENDING)])
+    await db.agent_tool_logs.create_index(
+        [("timestamp", ASCENDING)],
+        expireAfterSeconds=2592000,  # TTL: 30 days
+    )
+
     # agent_conversations — conversation history
     await db.agent_conversations.create_index(
         [("conversationId", ASCENDING)], unique=True

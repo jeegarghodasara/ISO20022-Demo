@@ -80,6 +80,15 @@ export const getAgentMemories = (agentId, memoryType) =>
 export const getMemoryStats = () => fetchJson('/agents/memory-stats');
 export const getAgentMessages = (limit = 50) => fetchJson(`/agents/messages?limit=${limit}`);
 export const getAgentConversations = (limit = 20) => fetchJson(`/agents/conversations?limit=${limit}`);
+export const getAgentMetrics = () => fetchJson('/agents/metrics');
+export const submitFeedback = (data) =>
+  fetchJson('/agents/feedback', { method: 'POST', body: JSON.stringify(data) });
+export const getFeedbackStats = () => fetchJson('/agents/feedback-stats');
+export const getToolLogs = (agentId, limit = 50) =>
+  fetchJson(`/agents/tool-logs?${agentId ? `agent_id=${agentId}&` : ''}limit=${limit}`);
+export const getToolStats = () => fetchJson('/agents/tool-stats');
+export const triggerConsolidation = () =>
+  fetchJson('/agents/consolidate', { method: 'POST' });
 
 // Collection Explorer
 export const getCollections = () => fetchJson('/collections');

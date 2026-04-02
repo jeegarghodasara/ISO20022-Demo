@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Brain, Route, Shield, AlertTriangle, GitCompare, Send,
-  Database, Clock, ChevronDown, ChevronRight, Sparkles
+  Database, Clock, ChevronDown, ChevronRight, Sparkles, History,
+  ThumbsUp, ThumbsDown, Activity, FileText, Layers
 } from 'lucide-react'
 import {
-  askAgent, getAgentMemories, getMemoryStats, getAgentConversations
+  askAgent, getAgentMemories, getMemoryStats, getAgentConversations,
+  getAgentMetrics, submitFeedback, getToolLogs, triggerConsolidation
 } from '../services/api'
 import { useAgentContext } from '../context/AgentContext'
 import StatusBadge from '../components/StatusBadge'
@@ -242,6 +244,198 @@ function MemoryInspector({ agentId, agentColor }) {
   )
 }
 
+function FeedbackButtons({ conversationId, turnNumber, existingFeedback }) {
+  const [feedback, setFeedback] = useState(existingFeedback?.rating || null)
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleFeedback = async (rating) => {
+    setSubmitting(true)
+    try {
+      await submitFeedback({ conversationId, turnNumber, rating })
+      setFeedback(rating)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, paddingLeft: 4 }}>
+      <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Helpful?</span>
+      <button
+        onClick={() => handleFeedback('up')}
+        disabled={submitting || feedback === 'up'}
+        style={{
+          background: feedback === 'up' ? 'var(--accent-bg)' : 'transparent',
+          border: `1px solid ${feedback === 'up' ? 'var(--accent)' : 'var(--border-subtle)'}`,
+          borderRadius: 4, padding: '2px 6px', cursor: 'pointer',
+          color: feedback === 'up' ? 'var(--accent)' : 'var(--text-muted)',
+          display: 'flex', alignItems: 'center', gap: 3, fontSize: 11,
+        }}
+      >
+        <ThumbsUp size={11} />
+      </button>
+      <button
+        onClick={() => handleFeedback('down')}
+        disabled={submitting || feedback === 'down'}
+        style={{
+          background: feedback === 'down' ? 'var(--red-bg)' : 'transparent',
+          border: `1px solid ${feedback === 'down' ? 'var(--red)' : 'var(--border-subtle)'}`,
+          borderRadius: 4, padding: '2px 6px', cursor: 'pointer',
+          color: feedback === 'down' ? 'var(--red)' : 'var(--text-muted)',
+          display: 'flex', alignItems: 'center', gap: 3, fontSize: 11,
+        }}
+      >
+        <ThumbsDown size={11} />
+      </button>
+      {feedback && <span style={{ fontSize: 10, color: feedback === 'up' ? 'var(--accent)' : 'var(--red)' }}>Recorded</span>}
+    </div>
+  )
+}
+
+function MetricsPanel() {
+  const [metrics, setMetrics] = useState(null)
+  const [toolLogs, setToolLogs] = useState(null)
+  const [consolidating, setConsolidating] = useState(false)
+  const [consolidationResult, setConsolidationResult] = useState(null)
+  const [activeSection, setActiveSection] = useState('metrics')
+
+  useEffect(() => {
+    getAgentMetrics().then(setMetrics).catch(console.error)
+    getToolLogs(null, 20).then(res => setToolLogs(res.logs)).catch(console.error)
+  }, [])
+
+  const handleConsolidate = async () => {
+    setConsolidating(true)
+    try {
+      const result = await triggerConsolidation()
+      setConsolidationResult(result)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setConsolidating(false)
+    }
+  }
+
+  return (
+    <div className="card" style={{ marginTop: 16 }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+        {[
+          { id: 'metrics', label: 'Performance', icon: Activity },
+          { id: 'tools', label: 'Tool Logs', icon: FileText },
+          { id: 'consolidation', label: 'Memory Consolidation', icon: Layers },
+        ].map(s => {
+          const Icon = s.icon
+          return (
+            <button key={s.id} className="btn btn-sm" onClick={() => setActiveSection(s.id)}
+              style={activeSection === s.id ? { borderColor: 'var(--accent)', color: 'var(--accent)' } : {}}
+            >
+              <Icon size={12} /> {s.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Performance Metrics */}
+      {activeSection === 'metrics' && metrics && (
+        <div>
+          {metrics.overall && (
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
+              <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)', padding: '8px 16px', textAlign: 'center' }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent)' }}>{metrics.overall.totalInvocations || 0}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Total Invocations</div>
+              </div>
+              <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)', padding: '8px 16px', textAlign: 'center' }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--blue)' }}>{(metrics.overall.avgLatencyMs || 0).toFixed(0)}ms</div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Avg Latency</div>
+              </div>
+              <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)', padding: '8px 16px', textAlign: 'center' }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--purple)' }}>{metrics.overall.totalMemoriesUsed || 0}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Memories Used</div>
+              </div>
+            </div>
+          )}
+          {metrics.perAgent && metrics.perAgent.length > 0 && (
+            <div className="table-container">
+              <table>
+                <thead><tr><th>Agent</th><th>Invocations</th><th>Avg Latency</th><th>Max Latency</th><th>Memories Used</th><th>Success</th><th>Errors</th></tr></thead>
+                <tbody>
+                  {metrics.perAgent.map((m, i) => (
+                    <tr key={i}>
+                      <td style={{ fontWeight: 600 }}>{m._id}</td>
+                      <td>{m.totalInvocations}</td>
+                      <td>{(m.avgLatencyMs || 0).toFixed(0)}ms</td>
+                      <td>{(m.maxLatencyMs || 0).toFixed(0)}ms</td>
+                      <td>{m.totalMemoriesUsed}</td>
+                      <td style={{ color: 'var(--accent)' }}>{m.successCount}</td>
+                      <td style={{ color: m.errorCount > 0 ? 'var(--red)' : 'var(--text-muted)' }}>{m.errorCount}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tool Call Logs */}
+      {activeSection === 'tools' && toolLogs && (
+        <div>
+          <div style={{ fontSize: 11, color: 'var(--accent)', marginBottom: 10, padding: '6px 10px', background: 'var(--accent-bg)', borderRadius: 'var(--radius)' }}>
+            <strong>Audit Trail:</strong> Every database operation (vector search, aggregation, find) executed by agents is logged for compliance.
+          </div>
+          {toolLogs.length === 0 ? (
+            <div className="empty-state" style={{ padding: 24 }}><p>No tool calls logged yet. Ask an agent a question first.</p></div>
+          ) : (
+            <div className="table-container">
+              <table>
+                <thead><tr><th>Time</th><th>Agent</th><th>Tool</th><th>Input</th><th>Output</th><th>Latency</th></tr></thead>
+                <tbody>
+                  {toolLogs.map((log, i) => (
+                    <tr key={i}>
+                      <td style={{ fontSize: 10, whiteSpace: 'nowrap' }}>{log.timestamp ? new Date(log.timestamp).toLocaleTimeString('en-GB') : ''}</td>
+                      <td style={{ fontSize: 11 }}>{log.agentId}</td>
+                      <td><span className="badge badge-blue" style={{ fontSize: 9 }}>{log.toolName}</span></td>
+                      <td style={{ fontSize: 10, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>{JSON.stringify(log.toolInput).slice(0, 60)}</td>
+                      <td style={{ fontSize: 10 }}>{log.outputSummary}</td>
+                      <td style={{ fontSize: 11, fontFamily: 'var(--font-code)' }}>{log.latencyMs ? `${log.latencyMs.toFixed(0)}ms` : '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Memory Consolidation */}
+      {activeSection === 'consolidation' && (
+        <div>
+          <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12, lineHeight: 1.6 }}>
+            Memory consolidation distills episodic memories into permanent semantic knowledge —
+            like how the brain consolidates during sleep. MongoDB aggregation pipelines group
+            episodic memories by corridor, risk level, and reason code to produce summarized knowledge.
+          </p>
+          <button className="btn btn-primary" onClick={handleConsolidate} disabled={consolidating}>
+            <Layers size={14} /> {consolidating ? 'Consolidating...' : 'Run Consolidation'}
+          </button>
+          {consolidationResult && (
+            <div style={{ marginTop: 12, padding: 12, background: 'var(--bg-primary)', borderRadius: 'var(--radius)', border: '1px solid var(--accent)' }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', marginBottom: 6 }}>
+                Consolidation complete — {consolidationResult.totalSemanticMemoriesCreated} semantic memories created
+              </div>
+              <pre style={{ fontSize: 11, fontFamily: 'var(--font-code)', color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', margin: 0 }}>
+                {JSON.stringify(consolidationResult, null, 2)}
+              </pre>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Agents() {
   const {
     agents, loading, refreshAgents,
@@ -251,7 +445,10 @@ export default function Agents() {
     result, setResult,
     error, setError,
     showMemory, setShowMemory,
-    addConversation,
+    loadConversation, conversationHistory,
+    // Multi-turn
+    activeConversationId, turns, conversationFull, sizeBytes,
+    addTurn, startNewConversation,
   } = useAgentContext()
 
   const [asking, setAsking] = useState(false)
@@ -266,9 +463,15 @@ export default function Agents() {
         question,
         uetr: uetr || undefined,
         agentId: selectedAgent || 'orchestrator',
+        conversationId: activeConversationId || undefined,
       })
-      setResult(data)
-      addConversation(data)
+      if (data.conversationFull && !data.result) {
+        // Conversation hit the limit before processing
+        setError(`Conversation reached the 10KB limit (${(data.sizeBytes / 1024).toFixed(1)}KB). Please start a new conversation.`)
+      } else {
+        addTurn(data)
+        setQuestion('')
+      }
       refreshAgents()
     } catch (err) {
       setError(err.message)
@@ -280,6 +483,8 @@ export default function Agents() {
   const handleSample = (q) => {
     setQuestion(q)
   }
+
+  const sizePercent = sizeBytes > 0 ? Math.min(100, (sizeBytes / 10240) * 100) : 0
 
   if (loading) return <div className="loading">Loading agents...</div>
 
@@ -366,11 +571,50 @@ export default function Agents() {
             ))}
           </div>
 
-          <button type="submit" className="btn btn-primary" disabled={asking || !question.trim()}>
-            <Send size={14} /> {asking ? 'Agents working...' : 'Ask'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button type="submit" className="btn btn-primary" disabled={asking || !question.trim() || conversationFull}>
+              <Send size={14} /> {asking ? 'Agents working...' : turns.length > 0 ? `Follow-up (Turn ${turns.length + 1})` : 'Ask'}
+            </button>
+            {turns.length > 0 && (
+              <button type="button" className="btn btn-sm" onClick={startNewConversation}>
+                New Conversation
+              </button>
+            )}
+          </div>
+
+          {/* Conversation size indicator */}
+          {turns.length > 0 && (
+            <div style={{ marginTop: 10, fontSize: 11, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span>Turn {turns.length} | {(sizeBytes / 1024).toFixed(1)}KB / 10KB</span>
+              <div style={{ flex: 1, maxWidth: 200, height: 4, background: 'var(--border-subtle)', borderRadius: 2, overflow: 'hidden' }}>
+                <div style={{
+                  width: `${sizePercent}%`, height: '100%', borderRadius: 2,
+                  background: sizePercent > 80 ? 'var(--red)' : sizePercent > 50 ? 'var(--orange)' : 'var(--accent)',
+                  transition: 'width 0.3s',
+                }} />
+              </div>
+              {conversationFull && (
+                <span style={{ color: 'var(--red)', fontWeight: 600 }}>Limit reached — start a new conversation</span>
+              )}
+            </div>
+          )}
         </form>
       </div>
+
+      {/* Conversation full prompt */}
+      {conversationFull && (
+        <div className="card" style={{ marginBottom: 16, borderColor: 'var(--orange)', background: 'var(--orange-bg)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <p style={{ fontSize: 13, color: 'var(--orange)' }}>
+              This conversation has reached the 10KB document size limit ({turns.length} turns, {(sizeBytes / 1024).toFixed(1)}KB).
+              Start a new conversation to continue.
+            </p>
+            <button className="btn btn-sm" onClick={startNewConversation} style={{ borderColor: 'var(--orange)', color: 'var(--orange)', whiteSpace: 'nowrap' }}>
+              New Conversation
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Error */}
       {error && (
@@ -379,8 +623,45 @@ export default function Agents() {
         </div>
       )}
 
-      {/* Result */}
-      <AgentResultPanel result={result} />
+      {/* Multi-turn conversation thread */}
+      {turns.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          {turns.map((turn, i) => (
+            <div key={i} style={{ marginBottom: 12 }}>
+              {/* User question */}
+              <div style={{
+                display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 6,
+                padding: '10px 14px', background: 'var(--bg-primary)', borderRadius: 'var(--radius)',
+                border: '1px solid var(--border-subtle)',
+              }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--blue)', minWidth: 48 }}>Turn {turn.turnNumber}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{turn.question}</div>
+                  {turn.uetr && <div style={{ fontSize: 10, fontFamily: 'var(--font-code)', color: 'var(--text-muted)', marginTop: 2 }}>UETR: {turn.uetr.slice(0, 16)}...</div>}
+                </div>
+                <span style={{ fontSize: 10, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                  {turn.timestamp ? new Date(turn.timestamp).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : ''}
+                </span>
+              </div>
+              {/* Agent result */}
+              <AgentResultPanel result={{ result: turn.result }} />
+              {/* Feedback buttons */}
+              {activeConversationId && (
+                <FeedbackButtons
+                  conversationId={activeConversationId}
+                  turnNumber={turn.turnNumber}
+                  existingFeedback={turn.feedback}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Single result (for loaded past conversations with old format) */}
+      {turns.length === 0 && result && (
+        <AgentResultPanel result={result} />
+      )}
 
       {/* Memory Inspector toggle */}
       {selectedAgent && (
@@ -399,6 +680,70 @@ export default function Agents() {
         agentId={showMemory}
         agentColor={selectedInfo?.color || 'var(--accent)'}
       />
+
+      {/* Metrics, Tool Logs, Consolidation */}
+      <MetricsPanel />
+
+      {/* Conversation History — loaded from MongoDB */}
+      {conversationHistory.length > 0 && (
+        <div className="card" style={{ marginTop: 16 }}>
+          <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <History size={16} style={{ color: 'var(--blue)' }} />
+            Conversation History
+            <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-muted)' }}>
+              {conversationHistory.length} conversations stored in MongoDB
+            </span>
+          </h4>
+          <div style={{ fontSize: 11, color: 'var(--accent)', marginBottom: 12, padding: '6px 10px', background: 'var(--accent-bg)', borderRadius: 'var(--radius)' }}>
+            <strong>MongoDB Value Prop:</strong> Multi-turn conversations stored as growing documents with atomic $push.
+            Each conversation is one document with a turns[] array — full context in a single read. 10KB limit per conversation.
+          </div>
+          <div>
+            {conversationHistory.map((conv, i) => {
+              const isActive = activeConversationId === conv.conversationId
+              const turnCount = conv.turns?.length || 1
+              const convSize = conv.sizeBytes || 0
+              const firstQuestion = conv.turns?.[0]?.question || conv.lastQuestion || conv.question || ''
+              return (
+                <div
+                  key={conv.conversationId || i}
+                  onClick={() => loadConversation(conv)}
+                  style={{
+                    padding: '10px 12px', marginBottom: 4, cursor: 'pointer',
+                    background: isActive ? 'var(--accent-bg)' : 'var(--bg-primary)',
+                    border: `1px solid ${isActive ? 'var(--accent)' : 'var(--border-subtle)'}`,
+                    borderRadius: 'var(--radius)', transition: 'border-color 0.15s',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <span className="badge badge-blue" style={{ fontSize: 9, minWidth: 'fit-content' }}>
+                      {turnCount} {turnCount === 1 ? 'turn' : 'turns'}
+                    </span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', flex: 1 }}>
+                      {firstQuestion}
+                    </span>
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                      {conv.createdAt ? new Date(conv.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {convSize > 0 && (
+                      <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                        {(convSize / 1024).toFixed(1)}KB
+                      </span>
+                    )}
+                    {conv.lastQuestion && turnCount > 1 && (
+                      <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                        Latest: {conv.lastQuestion}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
