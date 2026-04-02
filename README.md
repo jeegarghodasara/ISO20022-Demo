@@ -76,7 +76,8 @@ All five types share common fields (`uetr`, `settlementAmount`, `settlementCurre
 | **Decimal128** | Financial-grade precision for all monetary amounts |
 | **TTL Indexes** | Auto-expiry for notifications (90 days), status reports (1 year), agent messages (24hrs), episodic memory (90 days) |
 | **Compound Indexes** | Optimized queries by `messageType + status + date`, `IBAN + date`, `BIC + date` |
-| **Flexible Indexing** | Sparse indexes on type-specific fields (`originalUetr`, `mandateId`) |
+| **Partial Indexes** | Index only pacs.004 returns, only rejected payments, only high-priority -- 85% smaller than full indexes |
+| **Nested Field Indexes** | Index `debtor.account.iban`, `creditor.address.country` inside embedded documents |
 | **Atlas Vector Search** | Natural language payment search, similar transaction detection, smart remittance matching, agent memory recall |
 | **Change Streams** | Live Feed page, real-time dashboard counters, payment status tracking, automated return detection |
 | **WebSocket** | Real-time event streaming from Change Streams to browser clients |
@@ -309,7 +310,7 @@ Go to **Collection Explorer** under MongoDB to browse all collections, view docu
 - `GET /api/collections/{name}` -- Schema shape, sample document, regular indexes, vector indexes, validator
 
 ### MongoDB Value Propositions
-- `GET /api/value-props/summary` -- All 8 value propositions
+- `GET /api/value-props/summary` -- All 9 value propositions
 - `GET /api/value-props/document-model` -- Document model vs relational comparison
 - `GET /api/value-props/flexible-schema` -- Polymorphic message handling with live samples
 - `GET /api/value-props/aggregation-power` -- Live `$facet` aggregation with pipeline JSON
@@ -318,6 +319,7 @@ Go to **Collection Explorer** under MongoDB to browse all collections, view docu
 - `GET /api/value-props/decimal128-precision` -- Financial precision examples
 - `GET /api/value-props/ttl-indexes` -- Data lifecycle management
 - `GET /api/value-props/vector-search` -- Vector search use cases and index definitions
+- `GET /api/value-props/indexing-strategies` -- Compound, partial, TTL, unique, nested, and vector indexes
 
 ## Tech Stack
 
@@ -326,7 +328,7 @@ Go to **Collection Explorer** under MongoDB to browse all collections, view docu
 | **Frontend** | React 19, Vite 8, React Router 6, Recharts, Lucide Icons |
 | **Backend** | Python 3.12, FastAPI, Motor (async MongoDB driver), Pydantic |
 | **Database** | MongoDB 7.0+ with Decimal128, TTL indexes, JSON Schema validation |
-| **AI/Embeddings** | Voyage Finance 2 via MongoDB Atlas AI endpoint (1024 dimensions) |
+| **AI/Embeddings** | Voyage 4 Large via MongoDB Atlas AI endpoint (1024 dimensions) |
 | **Real-time** | MongoDB Change Streams + FastAPI WebSocket |
 | **Design** | MongoDB LeafyGreen design system (dark mode) |
 | **Containerization** | Docker, Docker Compose |
