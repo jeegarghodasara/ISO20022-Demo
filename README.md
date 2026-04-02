@@ -47,7 +47,7 @@ MongoDB solves this with the **polymorphic pattern** -- all payment types coexis
                                   │                │                   │
                          ┌────────▼──────────┐     │  15+ collections  │
                          │  Atlas AI Endpoint │     └───────────────────┘
-                         │  voyage-finance-2  │
+                         │  voyage-4-large    │
                          │  (1024 dim embeds) │
                          └───────────────────┘
 ```
